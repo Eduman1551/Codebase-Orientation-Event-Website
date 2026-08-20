@@ -1,13 +1,23 @@
-import supabase from '../supabase.js'
+import { getSupabase } from '../supabase.js'
 
 export async function seedRoundSubmissions(round_id) {
-  const { data: teams, error: teamsError } = await supabase
+  const { data: teams, error: teamsError } = await getSupabase()
     .from('teams')
     .select('id')
   if (teamsError) return { data: null, error: teamsError }
 
-  const rows = teams.map(t => ({ team_id: t.id, round_id, is_correct: false }))
-  return supabase.from('submissions').insert(rows).select()
+  const { data: existing, error: existingError } = await getSupabase()
+    .from('submissions')
+    .select('team_id')
+    .eq('round_id', round_id)
+  if (existingError) return { data: null, error: existingError }
+
+  const existingTeamIds = new Set(existing.map(row => String(row.team_id)))
+  const rows = teams
+    .filter(team => !existingTeamIds.has(String(team.id)))
+    .map(team => ({ team_id: team.id, round_id, is_correct: false, score: 0 }))
+  if (!rows.length) return { data: [], error: null }
+  return getSupabase().from('submissions').insert(rows).select()
 }
 
 export async function submitAnswer(
@@ -17,7 +27,7 @@ export async function submitAnswer(
   time_taken,
   score
 ) {
-  return supabase
+  return getSupabase()
     .from('submissions')
     .update({
       is_correct,
@@ -32,7 +42,7 @@ export async function submitAnswer(
 }
 
 export async function resetTeamSubmission(team_id, round_id) {
-  return supabase
+  return getSupabase()
     .from('submissions')
     .update({
       is_correct: false,
@@ -46,7 +56,7 @@ export async function resetTeamSubmission(team_id, round_id) {
 }
 
 export async function editTeamTime(team_id, round_id, new_time, new_score) {
-  return supabase
+  return getSupabase()
     .from('submissions')
     .update({ time_taken: new_time, score: new_score })
     .eq('team_id', team_id)
@@ -55,7 +65,7 @@ export async function editTeamTime(team_id, round_id, new_time, new_score) {
 }
 
 export async function getLeaderboard() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('submissions')
     .select('team_id, score, time_taken, teams(team_name)')
 
