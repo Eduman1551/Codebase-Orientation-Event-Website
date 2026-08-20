@@ -1,7 +1,7 @@
-import supabase from '../supabase.js'
+import { getSupabase } from '../supabase.js'
 
 export async function createTeam(team_name, member_names) {
-  return supabase
+  return getSupabase()
     .from('teams')
     .insert([{ team_name, member_names }])
     .select()
@@ -9,11 +9,11 @@ export async function createTeam(team_name, member_names) {
 }
 
 export async function getTeamById(id) {
-  return supabase.from('teams').select('*').eq('id', id).single()
+  return getSupabase().from('teams').select('*').eq('id', id).single()
 }
 
 export async function getAllTeams() {
-  return supabase
+  return getSupabase()
     .from('teams')
     .select('*')
     .order('created_at', { ascending: true })

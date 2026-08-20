@@ -10,10 +10,9 @@ const Login = () => {
     const handleChange = (e) =>{
         setForm({...form,[e.target.name]:e.target.value})
     }
-    console.log(form);
-    
-    const handleRegisteration = async () => {
-        let x =  register(form);
+    const handleRegisteration = async (formData) => {
+        const result = await register(formData)
+        if (result?.error) return
         router.push("/")
     }
     
