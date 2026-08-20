@@ -27,9 +27,7 @@ export default function ElectricalRoom() {
       <Starfield />
       <Navbar />
 
-      <div className="relative z-10 w-full max-w-4xl flex flex-col grow text-center">
-        
-        {/* Room Header */}
+      <div className="relative z-10 w-full max-w-4xl flex flex-col flex-grow text-center">
         <div className="mb-6 shrink-0">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-[4px_4px_0px_#000]">
             ELECTRICAL ROOM
@@ -39,22 +37,19 @@ export default function ElectricalRoom() {
           </p>
         </div>
 
-        {/* Scattered Room Container */}
-        <div className="relative w-full grow min-h-[55vh] bg-spacePanel/80 border-4 border-black rounded-3xl shadow-comicLg backdrop-blur-md overflow-hidden">
-          
-          {/* Subtle hazard stripes pattern in the background */}
-          <div className="absolute inset-0 pointer-events-none border-12 md:border-16 border-black/10 rounded-3xl" />
+        <div className="relative w-full flex-grow min-h-[55vh] bg-spacePanel/80 border-4 border-black rounded-3xl shadow-comicLg backdrop-blur-md overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none border-[12px] md:border-[16px] border-black/10 rounded-3xl" />
           <div className="absolute top-0 right-0 w-32 h-32 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(245,245,87,0.1)_10px,rgba(245,245,87,0.1)_20px)] opacity-50 rounded-tr-xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(245,245,87,0.1)_10px,rgba(245,245,87,0.1)_20px)] opacity-50 rounded-bl-xl pointer-events-none" />
 
-          {/* Object 1: Breaker Panel (Positioned Top Right) */}
+          {/* Fuse Box */}
           <div className="absolute top-[10%] right-[10%] md:top-[15%] md:right-[20%] transform transition-transform hover:scale-105 z-10">
             <button 
               onClick={() => handleObjectClick("CLUE 7: The lights were sabotaged exactly 42 seconds after the mission started.")}
+              onTouchStart={() => handleObjectClick("CLUE 7: The lights were sabotaged exactly 42 seconds after the mission started.")}
               className="group flex flex-col items-center focus:outline-none"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-700 border-4 border-black rounded-sm shadow-comic flex items-center justify-center relative group-hover:bg-gray-600 transition-colors">
-                {/* Flashing spark */}
                 <div className="absolute top-0 right-0 w-4 h-4 bg-crewYellow rounded-full animate-ping opacity-75" />
                 <span className="text-2xl sm:text-3xl md:text-4xl relative z-10">⚡</span>
               </div>
@@ -64,18 +59,17 @@ export default function ElectricalRoom() {
             </button>
           </div>
 
-          {/* Object 2: Suspicious Vent (Positioned Center Left) */}
+          {/* Vent */}
           <div className="absolute top-[40%] left-[10%] md:top-[45%] md:left-[25%] transform transition-transform hover:scale-105 z-10">
             <button 
               onClick={() => handleObjectClick("CLUE 8: There are footprints leading from the vent to the Engine room.")}
+              onTouchStart={() => handleObjectClick("CLUE 8: There are footprints leading from the vent to the Engine room.")}
               className="group flex flex-col items-center focus:outline-none"
             >
               <div className="w-20 h-12 sm:w-24 sm:h-16 md:w-32 md:h-20 bg-gray-800 border-4 border-black shadow-comic flex flex-col justify-evenly p-2 group-hover:-translate-y-1 transition-transform duration-300 relative">
-                {/* Vent grates */}
                 <div className="w-full h-1 md:h-2 bg-black rounded-full" />
                 <div className="w-full h-1 md:h-2 bg-black rounded-full" />
                 <div className="w-full h-1 md:h-2 bg-black rounded-full" />
-                {/* Scary red eyes on hover */}
                 <span className="absolute inset-0 flex items-center justify-center text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-[0_0_8px_red]">
                   👀
                 </span>
@@ -86,14 +80,14 @@ export default function ElectricalRoom() {
             </button>
           </div>
 
-          {/* Object 3: Exposed Wires (Positioned Bottom Center/Right) */}
+          {/* Wiring */}
           <div className="absolute bottom-[15%] right-[25%] md:bottom-[20%] md:right-[40%] transform transition-transform hover:scale-105 z-10">
             <button 
               onClick={() => handleObjectClick("CLUE 9: The RED wire was cut first. But the BLUE wire caused the outage.")}
+              onTouchStart={() => handleObjectClick("CLUE 9: The RED wire was cut first. But the BLUE wire caused the outage.")}
               className="group flex flex-col items-center focus:outline-none"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gray-900 border-4 border-black rounded-xl shadow-comic flex flex-col justify-center gap-1 p-2 group-hover:rotate-12 transition-transform duration-200 overflow-hidden">
-                {/* Colorful wires */}
                 <div className="w-[120%] h-2 bg-crewRed -ml-2 transform rotate-12 border-y border-black" />
                 <div className="w-[120%] h-2 bg-crewCyan -ml-2 transform -rotate-6 border-y border-black" />
                 <div className="w-[120%] h-2 bg-crewLime -ml-2 transform rotate-6 border-y border-black" />
@@ -103,15 +97,14 @@ export default function ElectricalRoom() {
               </span>
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* Clue Popup Overlay */}
       {activeClue && (
         <div 
-          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setActiveClue(null)} 
+          onTouchStart={() => setActiveClue(null)}
         >
           <div className="bg-white text-black border-4 border-black rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-[8px_8px_0px_#000] scale-in-center border-t-8 border-t-crewYellow">
             <h2 className="text-crewYellow font-black text-xl md:text-2xl uppercase tracking-widest mb-4 drop-shadow-sm">
