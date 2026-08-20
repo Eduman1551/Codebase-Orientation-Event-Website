@@ -1,0 +1,96 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Starfield from "../../components/Starfield";
+
+export default function RulesPage() {
+  const router = useRouter();
+  const [dots, setDots] = useState("");
+
+  // Simple loading dots animation for the "Waiting" text
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Backend Handoff Note:
+  // -----------------------------------------------------------
+  // Hey Backend Dev! Hook up your Supabase realtime subscription here.
+  // When the 'game_status' changes to 'start' in the database, 
+  // just fire: router.push("/tasks") or whatever the next route is.
+  // -----------------------------------------------------------
+
+  return (
+    <main className="min-h-screen relative flex items-center justify-center p-4">
+      <Starfield />
+
+      <div className="relative z-10 w-full max-w-2xl">
+        {/* Header Badge */}
+        <div className="text-center mb-6">
+          <div className="inline-block bg-crewYellow text-black border-4 border-black px-6 py-2 rounded-full font-black text-xl tracking-wider uppercase shadow-comic mb-2">
+            📋 Mission Briefing
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-[2px_2px_0px_#000]">
+            READ CAREFULLY
+          </h1>
+        </div>
+
+        {/* Main Panel Box */}
+        <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm">
+          
+          <div className="space-y-6 text-gray-200 font-medium text-lg leading-relaxed">
+            
+            {/* Rule 1 */}
+            <div className="flex items-start gap-4">
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewRed border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <p>
+                <strong className="text-white">Navigation is Key:</strong> You will be given a series of clues. Solve the current clue to unlock the path to the next sector.
+              </p>
+            </div>
+
+            {/* Rule 2 */}
+            <div className="flex items-start gap-4">
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewCyan border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <p>
+                <strong className="text-white">Beat the Clock:</strong> The timer starts the moment the host begins the game. Your team&apos;s total completion time determines your rank on the leaderboard.
+              </p>
+
+            {/* Rule 3 */}
+            <div className="flex items-start gap-4">
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewLime border-2 border-black rounded-full shadow-comicHover flex-none" />
+            </div>
+              <p>
+                <strong className="text-white">One Submission per Team:</strong> Discuss the answer with your crewmates. Only one person needs to submit the answer for the whole team to progress.
+              </p>
+            </div>
+
+            {/* Rule 4 */}
+            <div className="flex items-start gap-4">
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewOrange border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <p>
+                <strong className="text-white">No Sabotage:</strong> Keep your answers secure. Helping other crews or sharing passcodes will result in immediate ejection into the vacuum of space.
+              </p>
+            </div>
+
+          </div>
+
+          <hr className="my-8 border-t-4 border-black border-dashed opacity-50" />
+
+          {/* Waiting Status */}
+          <div className="bg-gray-900 border-4 border-black rounded-2xl p-6 text-center shadow-inner">
+            <h2 className="text-2xl font-black tracking-widest text-crewCyan animate-pulse uppercase">
+              Waiting for Host to Start{dots}
+            </h2>
+            <p className="text-gray-500 text-sm mt-2 font-bold uppercase tracking-wider">
+              Do not refresh this page. The mission will begin automatically.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  );
+}

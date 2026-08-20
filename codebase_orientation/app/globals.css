@@ -1,2 +1,69 @@
 @import "tailwindcss";
 
+@theme {
+  /* Among Us Custom Colors */
+  --color-spaceDark: #0c0d14;
+  --color-spacePanel: #1e2237;
+  --color-crewRed: #c51111;
+  --color-crewCyan: #38fedc;
+  --color-crewYellow: #f5f557;
+  --color-crewLime: #50ef39;
+  --color-crewOrange: #ef7d0e;
+  --color-visorBlue: #98d6f5;
+
+  /* Comic Box Shadows */
+  --shadow-comic: 4px 4px 0px #000000;
+  --shadow-comicHover: 2px 2px 0px #000000;
+  --shadow-comicLg: 8px 8px 0px #000000;
+}
+
+@layer base {
+  body {
+    @apply bg-spaceDark text-white overflow-x-hidden font-sans;
+  }
+}
+
+/* Comic / Among Us input focus style */
+@layer components {
+  .comic-input {
+    @apply w-full bg-gray-900/90 text-white placeholder-gray-500 font-bold px-4 py-3 rounded-xl border-4 border-black shadow-comic focus:outline-none focus:border-crewCyan focus:shadow-comicLg transition-all duration-150;
+  }
+}
+
+/* Starfield Animation */
+/* --- REPLACE THE OLD .stars BLOCK WITH THIS --- */
+
+/* Infinite scrolling animation */
+@keyframes drift {
+  0% { background-position: 0px 0px; }
+  100% { background-position: -500px 500px; }
+}
+
+/* Distant, slow-moving stars */
+.stars-bg {
+  background: radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+              radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+              radial-gradient(1px 1px at 90px 40px, #a8d5e5, rgba(0,0,0,0)),
+              radial-gradient(1.5px 1.5px at 160px 120px, #ffffff, rgba(0,0,0,0)),
+              radial-gradient(1px 1px at 230px 180px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 250px 250px;
+  animation: drift 50s linear infinite;
+}
+
+/* Closer, faster-moving stars */
+.stars-fg {
+  background: radial-gradient(1.5px 1.5px at 10px 20px, #ffffff, rgba(0,0,0,0)),
+              radial-gradient(2px 2px at 80px 90px, #a8d5e5, rgba(0,0,0,0)),
+              radial-gradient(1.5px 1.5px at 150px 40px, #ffffff, rgba(0,0,0,0)),
+              radial-gradient(2.5px 2.5px at 220px 180px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 350px 350px;
+  animation: drift 25s linear infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-10px); }
+  40%, 80% { transform: translateX(10px); }
+}
