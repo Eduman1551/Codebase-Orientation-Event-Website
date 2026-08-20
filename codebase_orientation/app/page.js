@@ -29,28 +29,30 @@ export default function LoginPage() {
   };
 
   const handleLogin = async (e) => {
-    // Safety check in case an event is passed
     if (e && e.preventDefault) e.preventDefault();
     setError("");
 
-    // DEV BYPASS: Type "TEST" as Team Name to skip typing out all 4 members
-    if (teamName.trim().toUpperCase() !== "TEST") {
-      if (!teamName.trim()) {
-        setError("Please provide a Team Name!");
-        return;
-      }
-      if (members.some((m) => !m.trim())) {
-        setError("All 4 crewmate names must be filled out!");
-        return;
-      }
+    // 1. Mandatory Team Name Check
+    if (!teamName.trim()) {
+      setError("Please provide a Team Name!");
+      return;
+    }
+
+    // 2. Filter out empty member inputs
+    const activeMembers = members.map((m) => m.trim()).filter((m) => m !== "");
+
+    // 3. Ensure at least 1 crewmate is registered
+    if (activeMembers.length === 0) {
+      setError("At least one crewmate must be registered!");
+      return;
     }
 
     setLoading(true);
 
     try {
       const payload = {
-        teamName: teamName.trim() || "TEST_TEAM",
-        members: members.map((m) => m.trim()),
+        teamName: teamName.trim(),
+        members: activeMembers, // Only sends the filled-in names!
       };
 
       console.log("Submitting crew roster to Supabase:", payload);
@@ -88,7 +90,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* CHANGED FROM <form> TO <div> TO PREVENT MOBILE RELOADS */}
           <div className="space-y-5">
             <div>
               <label className="block text-sm font-extrabold uppercase tracking-wide text-crewYellow mb-2">
@@ -105,7 +106,7 @@ export default function LoginPage() {
 
             <div className="space-y-3 pt-2">
               <label className="block text-sm font-extrabold uppercase tracking-wide text-crewCyan">
-                👥 Crew Members (4 Players)
+                👥 Crew Members (Up to 4)
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -118,7 +119,7 @@ export default function LoginPage() {
                       type="text"
                       value={member}
                       onChange={(e) => handleMemberChange(index, e.target.value)}
-                      placeholder={`Player ${index + 1} Name`}
+                      placeholder={index === 0 ? "Player 1 Name" : `Player ${index + 1} (Optional)`}
                       className="comic-input pl-10"
                     />
                   </div>
@@ -130,12 +131,8 @@ export default function LoginPage() {
               <button
                 type="button" 
                 onClick={handleLogin}
-                onTouchEnd={(e) => {
-                  e.preventDefault(); // This stops the phone's "ghost double tap" requirement
-                  handleLogin(e);
-                }}
                 disabled={loading}
-                className="w-full bg-crewLime hover:bg-green-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-comicHover text-black font-black text-xl py-4 rounded-2xl border-4 border-black shadow-comic transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-crewLime hover:bg-green-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-comicHover text-black font-black text-xl py-4 rounded-2xl border-4 border-black shadow-comic transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? "INITIALIZING SHIP..." : "ENTER SPACESHIP ➔"}
               </button>
