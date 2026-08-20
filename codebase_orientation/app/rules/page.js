@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Starfield from "../../components/Starfield";
+import { checkRoundStatusAction } from "../actions/useraction";
 
 export default function RulesPage() {
   const router = useRouter();
   const [dots, setDots] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [members, setMembers] = useState([]);
+  const [checking, setChecking] = useState(false);
 
-  // Simple loading dots animation for the "Waiting" text
+  // Animated loading dots
   useEffect(() => {
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
@@ -16,12 +20,42 @@ export default function RulesPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Backend Handoff Note:
-  // -----------------------------------------------------------
-  // Hey Backend Dev! Hook up your Supabase realtime subscription here.
-  // When the 'game_status' changes to 'start' in the database, 
-  // just fire: router.push("/tasks") or whatever the next route is.
-  // -----------------------------------------------------------
+  // Load team info from localStorage
+  useEffect(() => {
+    setTeamName(localStorage.getItem("teamName") || "");
+    try {
+      setMembers(JSON.parse(localStorage.getItem("members") || "[]"));
+    } catch {
+      setMembers([]);
+    }
+  }, []);
+
+  // Poll Supabase every 3s to see if admin started the round
+  const pollRoundStatus = useCallback(async () => {
+    if (checking) return;
+    setChecking(true);
+    try {
+      const status = await checkRoundStatusAction();
+      if (status.active && status.roundStartTime) {
+        // Sync gameStartTime with server round_start_time
+        localStorage.setItem(
+          "gameStartTime",
+          new Date(status.roundStartTime).getTime().toString()
+        );
+        localStorage.setItem("roundId", status.roundId);
+        router.push("/engine");
+      }
+    } catch (err) {
+      console.error("Poll error:", err);
+    } finally {
+      setChecking(false);
+    }
+  }, [checking, router]);
+
+  useEffect(() => {
+    const interval = setInterval(pollRoundStatus, 3000);
+    return () => clearInterval(interval);
+  }, [pollRoundStatus]);
 
   return (
     <main className="min-h-screen relative flex items-center justify-center p-4">
@@ -38,14 +72,30 @@ export default function RulesPage() {
           </h1>
         </div>
 
+        {/* Team badge */}
+        {teamName && (
+          <div className="text-center mb-4">
+            <span className="inline-block bg-crewCyan text-black border-2 border-black px-4 py-1 rounded-full font-black text-sm uppercase tracking-wider">
+              🚀 Ship: {teamName}
+            </span>
+            {members.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                {members.map((m, i) => (
+                  <span key={i} className="bg-gray-800 text-gray-200 border border-gray-600 px-3 py-0.5 rounded-full text-xs font-bold">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Main Panel Box */}
         <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm">
-          
           <div className="space-y-6 text-gray-200 font-medium text-lg leading-relaxed">
-            
             {/* Rule 1 */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 w-6 h-6 shrink-0 bg-crewRed border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewRed border-2 border-black rounded-full shadow-comicHover" />
               <p>
                 <strong className="text-white">Navigation is Key:</strong> You will be given a series of clues. Solve the current clue to unlock the path to the next sector.
               </p>
@@ -53,15 +103,15 @@ export default function RulesPage() {
 
             {/* Rule 2 */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 w-6 h-6 shrink-0 bg-crewCyan border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewCyan border-2 border-black rounded-full shadow-comicHover" />
               <p>
                 <strong className="text-white">Beat the Clock:</strong> The timer starts the moment the host begins the game. Your team&apos;s total completion time determines your rank on the leaderboard.
               </p>
+            </div>
 
             {/* Rule 3 */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 w-6 h-6 shrink-0 bg-crewLime border-2 border-black rounded-full shadow-comicHover flex-none" />
-            </div>
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewLime border-2 border-black rounded-full shadow-comicHover" />
               <p>
                 <strong className="text-white">One Submission per Team:</strong> Discuss the answer with your crewmates. Only one person needs to submit the answer for the whole team to progress.
               </p>
@@ -69,12 +119,11 @@ export default function RulesPage() {
 
             {/* Rule 4 */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 w-6 h-6 shrink-0 bg-crewOrange border-2 border-black rounded-full shadow-comicHover flex-none" />
+              <div className="mt-1 w-6 h-6 shrink-0 bg-crewYellow border-2 border-black rounded-full shadow-comicHover" />
               <p>
                 <strong className="text-white">No Sabotage:</strong> Keep your answers secure. Helping other crews or sharing passcodes will result in immediate ejection into the vacuum of space.
               </p>
             </div>
-
           </div>
 
           <hr className="my-8 border-t-4 border-black border-dashed opacity-50" />
@@ -88,7 +137,6 @@ export default function RulesPage() {
               Do not refresh this page. The mission will begin automatically.
             </p>
           </div>
-
         </div>
       </div>
     </main>

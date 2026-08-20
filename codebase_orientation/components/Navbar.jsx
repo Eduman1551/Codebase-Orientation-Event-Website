@@ -6,44 +6,11 @@ import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [seconds, setSeconds] = useState(0);
+  const [teamName, setTeamName] = useState("");
 
   useEffect(() => {
-    // 1. Check if the game has already started
-    let storedStartTime = localStorage.getItem("gameStartTime");
-
-    // 2. If no start time exists yet, create one
-    if (!storedStartTime) {
-      storedStartTime = Date.now().toString();
-      localStorage.setItem("gameStartTime", storedStartTime);
-    }
-
-    const startTimestamp = parseInt(storedStartTime, 10);
-
-    // 3. Create a helper function to calculate the time
-    const updateTimer = () => {
-      const now = Date.now();
-      const elapsedSeconds = Math.floor((now - startTimestamp) / 1000);
-      setSeconds(elapsedSeconds);
-    };
-
-    // Run it once asynchronously to satisfy the React linter (0ms delay)
-    setTimeout(updateTimer, 0);
-
-    // Set the recurring 1-second interval
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
+    setTeamName(localStorage.getItem("teamName") || "");
   }, []);
-
-  // Format time as MM:SS
-  const formatTime = (totalSeconds) => {
-    // Prevent negative numbers just in case
-    const safeSeconds = Math.max(0, totalSeconds); 
-    const m = Math.floor(safeSeconds / 60).toString().padStart(2, "0");
-    const s = (safeSeconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
 
   const navLinks = [
     { name: "Engine", path: "/engine" },
@@ -55,13 +22,19 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-spacePanel border-b-4 border-black shadow-comic min-h-20 flex items-center py-3">
-      <div className="max-w-7xl mx-auto w-full px-4 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
-        
-        {/* Timer Display */}
-        <div className="bg-black border-4 border-crewRed rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(197,17,17,0.5)] shrink-0">
-          <span className="text-crewRed font-black text-2xl font-mono tracking-widest">
-            {formatTime(seconds)}
-          </span>
+      <div className="max-w-7xl mx-auto w-full px-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0">
+
+        {/* Team name badge */}
+        <div className="shrink-0">
+          {teamName ? (
+            <span className="bg-black border-2 border-crewCyan text-crewCyan font-black text-sm px-3 py-1 rounded-lg tracking-widest uppercase">
+              🚀 {teamName}
+            </span>
+          ) : (
+            <span className="bg-black border-2 border-gray-600 text-gray-400 font-bold text-xs px-3 py-1 rounded-lg">
+              Not registered
+            </span>
+          )}
         </div>
 
         {/* Navigation Links */}
@@ -69,7 +42,6 @@ export default function Navbar() {
           {navLinks.map((link) => {
             const isActive = pathname === link.path;
             const isSubmit = link.name === "SUBMIT";
-
             return (
               <Link key={link.name} href={link.path}>
                 <div
