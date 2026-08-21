@@ -18,3 +18,21 @@ export async function getAllTeams() {
     .select('*')
     .order('created_at', { ascending: true })
 }
+
+export async function deleteTeam(team_id) {
+  // First, delete submissions for this team to satisfy foreign key constraints
+  const { error: subError } = await supabase
+    .from('submissions')
+    .delete()
+    .eq('team_id', team_id)
+
+  if (subError) return { data: null, error: subError }
+
+  // Then, delete the team
+  return supabase
+    .from('teams')
+    .delete()
+    .eq('id', team_id)
+    .select()
+    .single()
+}

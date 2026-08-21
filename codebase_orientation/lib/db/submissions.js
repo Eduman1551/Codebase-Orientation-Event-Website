@@ -62,6 +62,19 @@ export async function resetAllSubmissionsForRound(round_id) {
     .select()
 }
 
+export async function assignDNFSubmissions(round_id, round_duration = 300) {
+  return supabase
+    .from('submissions')
+    .update({
+      time_taken: round_duration,
+      is_correct: false,
+    })
+    .eq('round_id', round_id)
+    .eq('is_correct', false)
+    .is('time_taken', null)
+    .select()
+}
+
 export async function editTeamTime(team_id, round_id, new_time, new_score) {
   const updates = {}
   if (new_time !== undefined && new_time !== null) updates.time_taken = new_time
@@ -81,7 +94,7 @@ export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('submissions')
     .select('team_id, score, time_taken, teams(team_name)')
-    .eq('is_correct', true)  // Only count completed rounds
+    .not('time_taken', 'is', null) // Include both completed and DNF
 
   if (error) return { data: null, error }
 

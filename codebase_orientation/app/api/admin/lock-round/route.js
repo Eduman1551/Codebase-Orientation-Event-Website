@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyAdmin } from '@/lib/adminAuth.js';
 import { lockRound, getActiveRound } from '@/lib/db/rounds.js';
+import { assignDNFSubmissions } from '@/lib/db/submissions.js';
 
 export async function POST(request) {
   try {
@@ -40,6 +41,9 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    // Assign DNF to teams that did not finish
+    await assignDNFSubmissions(round_id, 300);
 
     return NextResponse.json({
       success: true,

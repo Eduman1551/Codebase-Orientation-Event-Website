@@ -154,6 +154,22 @@ export default function AdminPanel() {
     }
   };
 
+  const handleDeleteTeam = async (teamId) => {
+    if (!confirm("Are you sure you want to PERMANENTLY delete this team? This action cannot be undone.")) return;
+    setLoad(`delete-${teamId}`, true);
+    try {
+      const data = await apiCall("/api/admin/delete-team", "POST", { team_id: teamId });
+      if (data.success) {
+        showMessage(`Team deleted!`);
+        await refreshStatus();
+      } else {
+        showMessage(data.error || "Failed to delete team", true);
+      }
+    } finally {
+      setLoad(`delete-${teamId}`, false);
+    }
+  };
+
   const handleStartRound = async (roundNum) => {
     setLoad("start", true);
     try {
@@ -410,6 +426,13 @@ export default function AdminPanel() {
                             className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded border border-gray-600 disabled:opacity-50"
                           >
                             {loading[`edit-${team.id}`] ? "..." : "Edit Time"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTeam(team.id)}
+                            disabled={loading[`delete-${team.id}`]}
+                            className="px-2 py-1 bg-red-900 hover:bg-red-800 text-white text-xs font-bold rounded border border-red-700 disabled:opacity-50"
+                          >
+                            {loading[`delete-${team.id}`] ? "..." : "Delete"}
                           </button>
                         </div>
                       </td>
