@@ -1,23 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [seconds, setSeconds] = useState(0);
+  const [roundNum, setRoundNum] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const baseElapsedRef = useRef(0);
+  const receivedAtRef = useRef(null);
 
   useEffect(() => {
-    let startTimestamp = null;
     let isMounted = true;
 
     const syncServerTime = async () => {
       try {
-        const res = await fetch("/api/round/status");
+        const teamId = typeof window !== "undefined" ? localStorage.getItem("team_id") : null;
+        const url = teamId ? `/api/round/status?team_id=${teamId}` : "/api/round/status";
+        const res = await fetch(url);
         const data = await res.json();
-        if (isMounted && data.success && data.round?.round_start_time) {
-          startTimestamp = new Date(data.round.round_start_time).getTime();
+
+        if (!isMounted) return;
+
+        if (data.success && data.active && data.gameState === "running") {
+          const serverElapsed = typeof data.elapsedSeconds === "number" ? data.elapsedSeconds : 0;
+          baseElapsedRef.current = serverElapsed;
+          receivedAtRef.current = Date.now();
+          setSeconds(serverElapsed);
+          setRoundNum(data.round?.round_number || null);
+          setIsLocked(false);
+        } else {
+          baseElapsedRef.current = 0;
+          receivedAtRef.current = null;
+          setSeconds(0);
+          setIsLocked(data.gameState !== "running");
+          if (data.round?.round_number) setRoundNum(data.round.round_number);
         }
       } catch (err) {
         console.error("Failed to sync timer with server:", err);
@@ -25,39 +44,28 @@ export default function Navbar() {
     };
 
     syncServerTime();
+    const syncInterval = setInterval(syncServerTime, 3000); // re-sync every 3s
 
     const updateTimer = () => {
-      if (startTimestamp) {
-        const now = Date.now();
-        const elapsed = Math.max(0, Math.floor((now - startTimestamp) / 1000));
-        setSeconds(elapsed);
-      } else {
-        let stored = localStorage.getItem("gameStartTime");
-        if (!stored) {
-          stored = Date.now().toString();
-          localStorage.setItem("gameStartTime", stored);
-        }
-        const parsed = parseInt(stored, 10);
-        const elapsed = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
-        setSeconds(elapsed);
+      if (receivedAtRef.current !== null) {
+        const localPassed = Math.floor((Date.now() - receivedAtRef.current) / 1000);
+        setSeconds(baseElapsedRef.current + Math.max(0, localPassed));
       }
     };
 
-    setTimeout(updateTimer, 0);
-    const interval = setInterval(updateTimer, 1000);
+    const tickInterval = setInterval(updateTimer, 1000);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      clearInterval(syncInterval);
+      clearInterval(tickInterval);
     };
   }, []);
 
-  // Format time as MM:SS
   const formatTime = (totalSeconds) => {
-    // Prevent negative numbers just in case
-    const safeSeconds = Math.max(0, totalSeconds); 
-    const m = Math.floor(safeSeconds / 60).toString().padStart(2, "0");
-    const s = (safeSeconds % 60).toString().padStart(2, "0");
+    const safe = Math.max(0, totalSeconds);
+    const m = Math.floor(safe / 60).toString().padStart(2, "0");
+    const s = (safe % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
@@ -71,13 +79,22 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-spacePanel border-b-4 border-black shadow-comic min-h-20 flex items-center py-3">
-      <div className="max-w-7xl mx-auto w-full px-4 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
-        
-        {/* Timer Display */}
-        <div className="bg-black border-4 border-crewRed rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(197,17,17,0.5)] shrink-0">
-          <span className="text-crewRed font-black text-2xl font-mono tracking-widest">
-            {formatTime(seconds)}
-          </span>
+      <div className="max-w-7xl mx-auto w-full px-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0">
+
+        {/* Timer + Round Info */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="bg-black border-4 border-crewRed rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(197,17,17,0.5)]">
+            <span className={`text-crewRed font-black text-2xl font-mono tracking-widest ${isLocked ? "opacity-50" : ""}`}>
+              {isLocked ? "⏸ --:--" : formatTime(seconds)}
+            </span>
+          </div>
+          {roundNum && (
+            <div className="bg-gray-800 border-2 border-crewCyan rounded-xl px-3 py-1.5">
+              <span className="text-crewCyan font-black text-sm uppercase tracking-widest">
+                Round {roundNum}/5
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Navigation Links */}

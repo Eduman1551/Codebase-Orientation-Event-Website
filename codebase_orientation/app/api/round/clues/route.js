@@ -1,17 +1,16 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { getActiveRound } from '@/lib/db/rounds.js';
 import { getCluesForRoom } from '@/lib/db/clues.js';
 
+// Maps URL/page names to lowercase DB room_name values
 function normalizeRoomName(rawRoom) {
   if (!rawRoom) return '';
   const cleaned = rawRoom.trim().toLowerCase();
-  if (cleaned.includes('engine')) return 'Engine';
-  if (cleaned.includes('control')) return 'Control';
-  if (cleaned.includes('electrical')) return 'Electrical';
-  if (cleaned.includes('medbay') || cleaned.includes('med bay') || cleaned.includes('medical')) return 'MedBay';
-  if (cleaned.includes('weapon')) return 'Weapons';
-  if (cleaned.includes('meeting')) return 'Meeting';
-  return rawRoom.trim();
+  if (cleaned.includes('engine')) return 'engine';
+  if (cleaned.includes('control')) return 'control';
+  if (cleaned.includes('weapon') || cleaned.includes('electrical')) return 'electrical';
+  if (cleaned.includes('meeting') || cleaned.includes('medbay') || cleaned.includes('med bay') || cleaned.includes('medical')) return 'medbay';
+  return cleaned; // already lowercase
 }
 
 export async function GET(request) {
@@ -29,7 +28,7 @@ export async function GET(request) {
 
     if (!roundId) {
       const { data: activeRound, error: roundError } = await getActiveRound();
-      if (roundError || !activeRound || activeRound.is_locked) {
+      if (roundError || !activeRound) {
         return NextResponse.json(
           { success: false, error: 'No active round found' },
           { status: 400 }
@@ -42,8 +41,9 @@ export async function GET(request) {
 
     let { data: clues, error } = await getCluesForRoom(roundId, roomName);
 
-    if ((!clues || clues.length === 0) && roomName !== rawRoom) {
-      const fallbackResult = await getCluesForRoom(roundId, rawRoom.trim());
+    // Fallback: try the raw room name if normalized version returned nothing
+    if ((!clues || clues.length === 0) && roomName !== rawRoom.trim().toLowerCase()) {
+      const fallbackResult = await getCluesForRoom(roundId, rawRoom.trim().toLowerCase());
       if (fallbackResult.data && fallbackResult.data.length > 0) {
         clues = fallbackResult.data;
         error = fallbackResult.error;

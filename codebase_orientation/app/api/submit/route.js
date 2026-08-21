@@ -103,7 +103,7 @@ export async function POST(request) {
     }
 
     // 4. Calculate server-side elapsed time strictly (anti-tamper)
-    const startTimestamp = round.round_start_time ? new Date(round.round_start_time).getTime() : Date.now();
+    const startTimestamp = round.round_start_time ? new Date(round.round_start_time + (round.round_start_time.endsWith('Z') ? '' : 'Z')).getTime() : Date.now();
     const timeTaken = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
     const timeString = formatTime(timeTaken);
 

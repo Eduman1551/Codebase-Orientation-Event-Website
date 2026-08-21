@@ -53,8 +53,8 @@ export async function POST(request) {
       );
     }
 
-    const finalTime = rawTime !== undefined ? Number(rawTime) : null;
-    const finalScore = rawScore !== undefined ? Number(rawScore) : null;
+    const finalTime = rawTime !== undefined ? Number(rawTime) : undefined;
+    const finalScore = rawScore !== undefined ? Number(rawScore) : undefined;
 
     const { data, error } = await editTeamTime(targetTeamId, targetRoundId, finalTime, finalScore);
 

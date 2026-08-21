@@ -6,8 +6,12 @@ export async function seedRoundSubmissions(round_id) {
     .select('id')
   if (teamsError) return { data: null, error: teamsError }
 
+  // Upsert so re-seeding doesn't create duplicates
   const rows = teams.map(t => ({ team_id: t.id, round_id, is_correct: false }))
-  return supabase.from('submissions').insert(rows).select()
+  return supabase
+    .from('submissions')
+    .upsert(rows, { onConflict: 'team_id,round_id', ignoreDuplicates: false })
+    .select()
 }
 
 export async function submitAnswer(
@@ -45,10 +49,29 @@ export async function resetTeamSubmission(team_id, round_id) {
     .select()
 }
 
-export async function editTeamTime(team_id, round_id, new_time, new_score) {
+export async function resetAllSubmissionsForRound(round_id) {
   return supabase
     .from('submissions')
-    .update({ time_taken: new_time, score: new_score })
+    .update({
+      is_correct: false,
+      time_taken: null,
+      score: null,
+      submitted_at: null
+    })
+    .eq('round_id', round_id)
+    .select()
+}
+
+export async function editTeamTime(team_id, round_id, new_time, new_score) {
+  const updates = {}
+  if (new_time !== undefined && new_time !== null) updates.time_taken = new_time
+  if (new_score !== undefined && new_score !== null) updates.score = new_score
+  
+  if (Object.keys(updates).length === 0) return { data: null, error: new Error("No fields to update") }
+
+  return supabase
+    .from('submissions')
+    .update(updates)
     .eq('team_id', team_id)
     .eq('round_id', round_id)
     .select()
@@ -58,6 +81,7 @@ export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('submissions')
     .select('team_id, score, time_taken, teams(team_name)')
+    .eq('is_correct', true)  // Only count completed rounds
 
   if (error) return { data: null, error }
 
@@ -79,3 +103,4 @@ export async function getLeaderboard() {
   )
   return { data: leaderboard, error: null }
 }
+
