@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createTeam } from '@/lib/db/teams.js';
+import { getActiveRound, getLatestRound } from '@/lib/db/rounds.js';
 
 export async function POST(request) {
   try {
@@ -27,6 +28,16 @@ export async function POST(request) {
 
     if (finalMembers.length === 0) {
       return NextResponse.json({ success: false, error: 'At least one crew member name is required' }, { status: 400 });
+    }
+
+    // Guard: Check if the game has already launched
+    const { data: activeRound } = await getActiveRound();
+    if (activeRound && activeRound.round_start_time) {
+      return NextResponse.json({ success: false, error: 'Registration is closed — the mission has already launched.' }, { status: 403 });
+    }
+    const { data: latestRound } = await getLatestRound();
+    if (latestRound && latestRound.is_locked && latestRound.round_start_time) {
+      return NextResponse.json({ success: false, error: 'Registration is closed — the mission has already launched.' }, { status: 403 });
     }
 
     const { data: team, error } = await createTeam(finalTeamName, finalMembers);

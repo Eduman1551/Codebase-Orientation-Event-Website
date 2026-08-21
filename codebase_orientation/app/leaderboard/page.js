@@ -156,9 +156,16 @@ export default function LeaderboardPage() {
                     <div className={`w-4 h-5 md:w-5 md:h-6 ${autoColor} border-2 border-black rounded-full relative shrink-0 shadow-[2px_2px_0px_#000]`}>
                        <div className="absolute top-[20%] left-[20%] w-[60%] h-[40%] bg-blue-200 border border-black rounded-full" />
                     </div>
-                    <span className="font-bold text-base md:text-xl truncate tracking-wide">
-                      {team.name}
-                    </span>
+                    <div className="flex flex-col xl:flex-row xl:items-baseline gap-x-2 w-full py-1">
+                      <span className="font-bold text-base md:text-xl tracking-wide break-words">
+                        {team.name}
+                      </span>
+                      {team.members && team.members.length > 0 && (
+                        <span className="font-bold text-xs md:text-sm text-gray-400 tracking-wide break-words">
+                          ({team.members.join(", ")})
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Clear Time Column */}

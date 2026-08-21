@@ -15,6 +15,7 @@ export async function GET() {
     const formatted = (data || []).map((item, idx) => ({
       id: item.team_id || `team-${idx}`,
       name: item.team_name || 'Anonymous Crew',
+      members: item.member_names || [],
       time: item.total_time || 0,
       score: item.total_score || 0,
       team_name: item.team_name || 'Anonymous Crew',

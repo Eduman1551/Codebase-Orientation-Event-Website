@@ -17,9 +17,35 @@ export default function LoginPage() {
   const [members, setMembers] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [gameState, setGameState] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     localStorage.removeItem("gameStartTime");
+    
+    let isMounted = true;
+    const checkStatus = async () => {
+      try {
+        const res = await fetch("/api/round/status");
+        const data = await res.json();
+        if (isMounted && data.success) {
+          setGameState(data.gameState);
+          if (data.gameState !== "waiting") {
+            setIsLocked(true);
+            setLoading(false);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to check round status:", e);
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleMemberChange = (index, value) => {
@@ -68,6 +94,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
+        if (res.status === 403 || data.error?.includes('already launched')) {
+          setIsLocked(true);
+        }
         throw new Error(data.error || "Failed to register team");
       }
 
@@ -103,62 +132,83 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm">
-          {error && (
-            <div className="mb-6 bg-crewRed/20 border-3 border-crewRed text-red-300 px-4 py-2 rounded-xl text-center font-bold text-sm animate-pulse">
-              ⚠️ {error}
-            </div>
-          )}
+        {gameState === null ? (
+          <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm flex justify-center items-center min-h-[300px]">
+             <div className="text-white font-bold animate-pulse text-xl tracking-wider">CONNECTING TO SERVER...</div>
+          </div>
+        ) : isLocked ? (
+          <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm text-center min-h-[300px] flex flex-col justify-center items-center">
+            {error && (
+              <div className="mb-6 bg-crewRed/20 border-3 border-crewRed text-red-300 px-4 py-2 rounded-xl text-center font-bold text-sm animate-pulse">
+                ⚠️ {error}
+              </div>
+            )}
+            <div className="text-6xl mb-4">🚀</div>
+            <h2 className="text-2xl font-black text-crewRed uppercase tracking-wider mb-2">
+              MISSION ALREADY LAUNCHED
+            </h2>
+            <p className="text-gray-300 font-medium text-lg">
+              Registration is closed. Find your team's host if you haven't registered yet.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-spacePanel/95 border-4 border-black rounded-3xl p-6 sm:p-8 shadow-comicLg backdrop-blur-sm">
+            {error && (
+              <div className="mb-6 bg-crewRed/20 border-3 border-crewRed text-red-300 px-4 py-2 rounded-xl text-center font-bold text-sm animate-pulse">
+                ⚠️ {error}
+              </div>
+            )}
 
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-extrabold uppercase tracking-wide text-crewYellow mb-2">
-                🏷️ Team / Ship Name
-              </label>
-              <input
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="e.g., Red Impostors..."
-                className="comic-input"
-              />
-            </div>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-extrabold uppercase tracking-wide text-crewYellow mb-2">
+                  🏷️ Team / Ship Name
+                </label>
+                <input
+                  type="text"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  placeholder="e.g., Red Impostors..."
+                  className="comic-input"
+                />
+              </div>
 
-            <div className="space-y-3 pt-2">
-              <label className="block text-sm font-extrabold uppercase tracking-wide text-crewCyan">
-                👥 Crew Members (Up to 4)
-              </label>
+              <div className="space-y-3 pt-2">
+                <label className="block text-sm font-extrabold uppercase tracking-wide text-crewCyan">
+                  👥 Crew Members (Up to 4)
+                </label>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {members.map((member, index) => (
-                  <div key={index} className="relative flex items-center">
-                    <div
-                      className={`absolute left-3 w-4 h-4 rounded-full border-2 border-black ${MEMBER_COLORS[index].color} z-10`}
-                    />
-                    <input
-                      type="text"
-                      value={member}
-                      onChange={(e) => handleMemberChange(index, e.target.value)}
-                      placeholder={index === 0 ? "Player 1 Name" : `Player ${index + 1} (Optional)`}
-                      className="comic-input pl-10"
-                    />
-                  </div>
-                ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {members.map((member, index) => (
+                    <div key={index} className="relative flex items-center">
+                      <div
+                        className={`absolute left-3 w-4 h-4 rounded-full border-2 border-black ${MEMBER_COLORS[index].color} z-10`}
+                      />
+                      <input
+                        type="text"
+                        value={member}
+                        onChange={(e) => handleMemberChange(index, e.target.value)}
+                        placeholder={index === 0 ? "Player 1 Name" : `Player ${index + 1} (Optional)`}
+                        className="comic-input pl-10"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="button" 
+                  onClick={handleLogin}
+                  disabled={loading}
+                  className="w-full bg-crewLime hover:bg-green-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-comicHover text-black font-black text-xl py-4 rounded-2xl border-4 border-black shadow-comic transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? "INITIALIZING SHIP..." : "ENTER SPACESHIP ➔"}
+                </button>
               </div>
             </div>
-
-            <div className="pt-4">
-              <button
-                type="button" 
-                onClick={handleLogin}
-                disabled={loading}
-                className="w-full bg-crewLime hover:bg-green-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-comicHover text-black font-black text-xl py-4 rounded-2xl border-4 border-black shadow-comic transition-all uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? "INITIALIZING SHIP..." : "ENTER SPACESHIP ➔"}
-              </button>
-            </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );

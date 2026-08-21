@@ -93,7 +93,7 @@ export async function editTeamTime(team_id, round_id, new_time, new_score) {
 export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('submissions')
-    .select('team_id, score, time_taken, teams(team_name)')
+    .select('team_id, score, time_taken, teams(team_name, member_names)')
     .not('time_taken', 'is', null) // Include both completed and DNF
 
   if (error) return { data: null, error }
@@ -101,8 +101,17 @@ export async function getLeaderboard() {
   const totals = {}
   for (const row of data) {
     if (!totals[row.team_id]) {
+      let mNames = row.teams.member_names;
+      if (typeof mNames === 'string') {
+        try { mNames = JSON.parse(mNames); } catch(e) { mNames = [mNames]; }
+      }
+      if (!Array.isArray(mNames)) {
+        mNames = mNames ? [mNames] : [];
+      }
+      
       totals[row.team_id] = {
         team_name: row.teams.team_name,
+        member_names: mNames,
         total_score: 0,
         total_time: 0
       }
