@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation'
 
 const Clue = ({ clueId }) => {
     const [ans, setAns] = useState("")
-    const [startTime, setStartTime] = useState(null)
+    const [startTime, setStartTime] = useState(() => Date.now())
     const [submitted, setSubmitted] = useState(false)
     const [message, setMessage] = useState("")
     const [range, setRange] = useState(100)
@@ -41,35 +41,29 @@ const Clue = ({ clueId }) => {
     const router = useRouter()
     const ref = useRef()
 
-    const fetchClue = async () => {
-       //fetch clue from db and store it in data
-
-        // setClue(data.clue)
-        setClue({clue1:"sdasd"})
-
-        setRange(100)
-    }
-
     useEffect(() => {
-        if (!clue) return
-
-        const interval = setInterval(() => {
-            setRange(prev => prev - 1)
-        }, 3000)
-
-        const timeout = setTimeout(() => {
-            router.push('/answer')
-        }, 5 * 60 * 1000)
-
+        let isMounted = true
+        fetch('/api/round/clues?room=engine')
+            .then(res => res.json())
+            .then(data => {
+                if (isMounted) {
+                    if (data.clues && data.clues.length > 0) {
+                        setClue(data.clues[0])
+                    } else {
+                        setClue({ clue_text: "Sample clue" })
+                    }
+                    setRange(100)
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setClue({ clue_text: "Sample clue" })
+                    setRange(100)
+                }
+            })
         return () => {
-            clearInterval(interval)
-            clearTimeout(timeout)
+            isMounted = false
         }
-    }, [clue, router])
-
-    useEffect(() => {
-        setStartTime(Date.now())
-        fetchClue()
     }, [])
     
     

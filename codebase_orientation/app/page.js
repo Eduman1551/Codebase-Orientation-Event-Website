@@ -57,11 +57,31 @@ export default function LoginPage() {
 
       console.log("Submitting crew roster to Supabase:", payload);
       
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to register team");
+      }
+
+      if (data.team) {
+        localStorage.setItem("team_id", data.team.id);
+        localStorage.setItem("team_name", data.team.team_name);
+      }
+
       // Navigate to rules page
       router.push("/rules");
 
     } catch (err) {
-      setError("Failed to register team. Check connection.");
+      console.error("Team registration error:", err);
+      setError(err.message || "Failed to register team. Check connection.");
       setLoading(false); 
     }
   };

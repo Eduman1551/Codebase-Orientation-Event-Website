@@ -9,31 +9,47 @@ export default function Navbar() {
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
-    // 1. Check if the game has already started
-    let storedStartTime = localStorage.getItem("gameStartTime");
+    let startTimestamp = null;
+    let isMounted = true;
 
-    // 2. If no start time exists yet, create one
-    if (!storedStartTime) {
-      storedStartTime = Date.now().toString();
-      localStorage.setItem("gameStartTime", storedStartTime);
-    }
-
-    const startTimestamp = parseInt(storedStartTime, 10);
-
-    // 3. Create a helper function to calculate the time
-    const updateTimer = () => {
-      const now = Date.now();
-      const elapsedSeconds = Math.floor((now - startTimestamp) / 1000);
-      setSeconds(elapsedSeconds);
+    const syncServerTime = async () => {
+      try {
+        const res = await fetch("/api/round/status");
+        const data = await res.json();
+        if (isMounted && data.success && data.round?.round_start_time) {
+          startTimestamp = new Date(data.round.round_start_time).getTime();
+        }
+      } catch (err) {
+        console.error("Failed to sync timer with server:", err);
+      }
     };
 
-    // Run it once asynchronously to satisfy the React linter (0ms delay)
-    setTimeout(updateTimer, 0);
+    syncServerTime();
 
-    // Set the recurring 1-second interval
+    const updateTimer = () => {
+      if (startTimestamp) {
+        const now = Date.now();
+        const elapsed = Math.max(0, Math.floor((now - startTimestamp) / 1000));
+        setSeconds(elapsed);
+      } else {
+        let stored = localStorage.getItem("gameStartTime");
+        if (!stored) {
+          stored = Date.now().toString();
+          localStorage.setItem("gameStartTime", stored);
+        }
+        const parsed = parseInt(stored, 10);
+        const elapsed = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
+        setSeconds(elapsed);
+      }
+    };
+
+    setTimeout(updateTimer, 0);
     const interval = setInterval(updateTimer, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Format time as MM:SS

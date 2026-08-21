@@ -12,9 +12,28 @@ const Login = () => {
     }
     console.log(form);
     
+    const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
+
     const handleRegisteration = async () => {
-        let x =  register(form);
-        router.push("/")
+        setError("")
+        setLoading(true)
+        try {
+            const res = await register(form)
+            if (!res.success) {
+                setError(res.error || "Registration failed")
+                setLoading(false)
+                return
+            }
+            if (res.team) {
+                localStorage.setItem("team_id", res.team.id)
+                localStorage.setItem("team_name", res.team.team_name)
+            }
+            router.push("/rules")
+        } catch (err) {
+            setError(err.message || "Failed to register")
+            setLoading(false)
+        }
     }
     
   return (
@@ -25,6 +44,8 @@ const Login = () => {
                     <h1 className="text-2xl font-semibold text-slate-900">Registration</h1>
                     <p className="mt-2 text-sm text-slate-600">Register to continue.</p>
                 </div>
+
+                {error && <p className="text-sm font-bold text-red-600">⚠️ {error}</p>}
 
                 <label className="block text-sm font-medium text-slate-700">
                     Team Name

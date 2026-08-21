@@ -36,19 +36,31 @@ export default function LeaderboardPage() {
   // 🟢 BACKEND DEVELOPER ZONE 🟢
   // =======================================================================
   useEffect(() => {
-    /* 
-      TODO FOR BACKEND:
-      1. On mount, fetch the current top teams from Supabase.
-         Format them into this object structure: 
-         { id: string, name: string, time: number (seconds) }
-         Set them using: setTeams(fetchedTeams)
+    let isMounted = true;
 
-      2. Set up a Supabase Realtime subscription here.
-         When a team completes the game and their time updates:
-         - Fetch the updated list
-         - Sort the array: .sort((a, b) => a.time - b.time)
-         - Call setTeams() with the new sorted array.
-    */
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await fetch("/api/leaderboard");
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.leaderboard)) {
+          if (data.leaderboard.length > 0) {
+            setTeams(data.leaderboard);
+          } else {
+            setTeams([{ id: "empty", name: "No team records yet", time: 0 }]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch leaderboard:", err);
+      }
+    };
+
+    fetchLeaderboard();
+    const interval = setInterval(fetchLeaderboard, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
   // =======================================================================
 

@@ -4,50 +4,50 @@ import { useState } from "react";
 import Starfield from "../../components/Starfield";
 import Navbar from "../../components/Navbar";
 
-// Set your actual answer here! (Make sure it's uppercase for the check)
-const CORRECT_ANSWER = "ALIEN"; 
-
 export default function SubmitPage() {
   const [answer, setAnswer] = useState("");
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'error' | 'success'
   const [finalTime, setFinalTime] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!answer.trim() || status === "success") return;
+    if (!answer.trim() || status === "success" || status === "loading") return;
 
     setStatus("loading");
+    setErrorMessage("");
 
-    // Simulating a slight delay for dramatic effect (and network request)
-    setTimeout(() => {
-      if (answer.trim().toUpperCase() === CORRECT_ANSWER) {
-        // --- SUCCESS LOGIC ---
-        // 1. Calculate the exact time it took
-        const storedStartTime = localStorage.getItem("gameStartTime");
-        const startTimestamp = storedStartTime ? parseInt(storedStartTime, 10) : Date.now();
-        const totalSeconds = Math.floor((Date.now() - startTimestamp) / 1000);
-        
-        // Format MM:SS
-        const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
-        const s = (totalSeconds % 60).toString().padStart(2, "0");
-        const timeString = `${m}:${s}`;
-        
-        setFinalTime(timeString);
+    try {
+      const teamId = typeof window !== "undefined" ? localStorage.getItem("team_id") : null;
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answer: answer.trim(),
+          team_id: teamId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.correct) {
+        setFinalTime(data.timeString || "Recorded");
         setStatus("success");
-
-        // -----------------------------------------------------------
-        // Backend Handoff Note:
-        // Hey Backend Dev! The team got the correct answer here. 
-        // Save `timeString` (or `totalSeconds`) to Supabase for the leaderboard!
-        // -----------------------------------------------------------
-        console.log(`Team finished in: ${timeString}`);
-        
+      } else if (data.alreadySubmitted) {
+        setFinalTime(data.timeString || "Recorded");
+        setStatus("success");
       } else {
-        // --- ERROR LOGIC ---
         setStatus("error");
-        setAnswer(""); // Clear the input so they can type again quickly
+        setErrorMessage(data.error || data.message || "ACCESS DENIED. TRY AGAIN.");
+        setAnswer("");
       }
-    }, 800);
+    } catch (err) {
+      console.error("Submission failed:", err);
+      setStatus("error");
+      setErrorMessage("Network error. Please try again.");
+    }
   };
 
   return (
@@ -87,7 +87,7 @@ export default function SubmitPage() {
             )}
             {status === "error" && (
               <p className="text-crewRed font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-[0_0_8px_rgba(197,17,17,0.8)]">
-                ❌ ACCESS DENIED. TRY AGAIN.
+                {errorMessage || "❌ ACCESS DENIED. TRY AGAIN."}
               </p>
             )}
             {status === "success" && (

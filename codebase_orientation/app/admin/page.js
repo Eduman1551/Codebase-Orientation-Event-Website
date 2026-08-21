@@ -21,22 +21,30 @@ export default function AdminLogin() {
 
     setLoading(true);
 
-    // =======================================================================
-    // 🟢 BACKEND DEVELOPER ZONE 🟢
-    // =======================================================================
-    // DEV BYPASS: Hardcoded for frontend testing. 
-    // TODO: Replace this with Supabase Edge Function or secure DB check.
-    if (passcode === "ADMIN123") {
-      router.push("/admin/panel"); // Navigates to the control dashboard
-      return;
-    }
-    // =======================================================================
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-passkey": passcode.trim(),
+        },
+        body: JSON.stringify({ passkey: passcode.trim() }),
+      });
 
-    // Simulated network delay for incorrect passwords
-    setTimeout(() => {
-      setError("ACCESS DENIED. Invalid security clearance.");
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        sessionStorage.setItem("admin_passkey", passcode.trim());
+        router.push("/admin/panel");
+      } else {
+        setError(data.error || "ACCESS DENIED. Invalid security clearance.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Admin login error:", err);
+      setError("Network error. Could not authenticate.");
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (

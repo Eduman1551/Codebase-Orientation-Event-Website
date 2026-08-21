@@ -16,9 +16,29 @@ export default function RulesPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Backend Handoff Note:
-  // Hook up Supabase realtime subscription here.
-  // When 'game_status' changes to 'start', fire: router.push("/engine")
+  // Check for active round start and transition automatically
+  useEffect(() => {
+    let isMounted = true;
+    const checkStatus = async () => {
+      try {
+        const res = await fetch("/api/round/status");
+        const data = await res.json();
+        if (isMounted && data.success && data.active && data.gameState === "running") {
+          router.push("/engine");
+        }
+      } catch (err) {
+        console.error("Failed to check round status:", err);
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [router]);
 
   return (
     <main className="min-h-screen relative flex items-center justify-center p-4 py-12 md:py-8">
