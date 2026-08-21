@@ -50,8 +50,6 @@ All timing is computed **server-side only** — the client never reports elapsed
 | `/leaderboard` | Public live leaderboard (for projector) |
 | `/admin` | Admin passkey login |
 | `/admin/panel` | Admin dashboard |
-| `/adminlogin`, `/adminaction` | Admin auth/action handling |
-
 ## Environment Variables
 ```
 NEXT_PUBLIC_SUPABASE_URL=
